@@ -11,12 +11,6 @@ class Command:
         if len(carets)!=1:
             msg_status('JSON-YAML: Cannot handle multi-carets')
             return False
-
-        x, y, x1, y1 = carets[0]
-        if y1>=0:
-            msg_status('JSON-YAML: Cannot handle selection')
-            return False
-
         return True
 
     def conv_json(self, s):
@@ -42,15 +36,24 @@ class Command:
     def work(self, conv, lexer, tooltip):
 
         if not self.check(): return
-        s = ed.get_text_all()
-        s = conv(s)
+
+        s = ed.get_text_sel()
+        is_sel = bool(s)
+        if not is_sel:
+            s = ed.get_text_all()
+
+        try:
+            s = conv(s)
+        except Exception as e:
+            return msg_status(tooltip+': '+str(e))
 
         if not s:
             return msg_status(tooltip+': Cannot convert')
+
         file_open('')
         ed.set_text_all(s)
         ed.set_prop(PROP_LEXER_FILE, lexer)
-        msg_status(tooltip+': Converted')
+        msg_status(tooltip+': '+('Converted selection' if is_sel else 'Converted entire document'))
 
     def json_to_yaml(self):
 
